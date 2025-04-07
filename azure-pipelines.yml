@@ -19,8 +19,12 @@ steps:
 - script: dotnet pack --configuration $(buildConfiguration) --output $(outputDir)
   displayName: 'Pack NuGet package'
 
+# Diagnostic step: list files in the output directory
+- script: dir "$(outputDir)"
+  displayName: 'List files in output directory'
+
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-- script: dotnet nuget push "$(outputDir)/*.nupkg" --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" --api-key AzureDevOps
+- script: dotnet nuget push "$(outputDir)\*.nupkg" --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" --api-key AzureDevOps
   displayName: 'Push to Azure Artifacts'
