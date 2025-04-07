@@ -1,0 +1,26 @@
+trigger:
+- main
+
+pool:
+  name: 'COMP367-DevOps Agent' 
+
+variables:
+  buildConfiguration: 'Release'
+  outputDir: '$(Build.ArtifactStagingDirectory)/nuget'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    version: '8.x'  
+
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'Build project'
+
+- script: dotnet pack --configuration $(buildConfiguration) --output $(outputDir)
+  displayName: 'Pack NuGet package'
+
+- task: NuGetAuthenticate@1
+  displayName: 'Authenticate with Azure Artifacts'
+
+- script: dotnet nuget push "$(outputDir)/*.nupkg" --source "<your-feed-URL>" --api-key AzureDevOps
+  displayName: 'Push to Azure Artifacts'
