@@ -18,12 +18,12 @@ steps:
 - script: mkdir "$(outputDir)"
   displayName: 'Create NuGet output directory'
 
-# Build TesterPackage
-- script: dotnet build TesterPackage/ShowCase.csproj --configuration $(buildConfiguration)
+# Build TestPackage
+- script: dotnet build TestPackage/TestPackage.csproj --configuration $(buildConfiguration)
   displayName: 'Build TestPackage'
 
-# Pack TesterPackage
-- script: dotnet pack TesterPackage/ShowCase.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
+# Pack TestPackage
+- script: dotnet pack TestPackage/TestPackage.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
   displayName: 'Pack TestPackage'
 
 # Verify the .nupkg file exists
@@ -36,15 +36,15 @@ steps:
 
 # Push TestPackage.1.0.0.nupkg
 - task: PowerShell@2
-  displayName: 'Push TesterPackage to Azure Artifacts'
+  displayName: 'Push TestPackage to Azure Artifacts'
   inputs:
     targetType: inline
     script: |
-      $packagePath = "$(outputDir)\TesterPackage.1.0.0.nupkg"
+      $packagePath = "$(outputDir)\TestPackage.1.0.0.nupkg"
       if (Test-Path $packagePath) {
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
             --api-key AzureDevOps
       } else {
-          Write-Error "TesterPackage.1.0.0.nupkg not found!"
+          Write-Error "TestPackage.1.0.0.nupkg not found!"
       }
