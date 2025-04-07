@@ -6,33 +6,34 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget' 
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'
 
 steps:
 - task: UseDotNet@2
   inputs:
     version: '8.x'
 
-# Explicitly create directory first
+# Create output directory
 - script: mkdir "$(outputDir)"
   displayName: 'Create output directory'
 
-# Build the SPECIFIC LIBRARY PROJECT (not solution)
+# Build the library project
 - script: dotnet build StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration)
   displayName: 'Build Library Project'
 
-# Pack the SPECIFIC LIBRARY PROJECT
+# Pack the library project into a NuGet package
 - script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
   displayName: 'Pack StringLibrary'
 
-# Diagnostic step
+# Diagnostic: List files in the output directory
 - script: dir "$(outputDir)"
   displayName: 'List files in output directory'
 
+# Authenticate with Azure Artifacts (this will configure credentials for nuget push)
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push only StringLibrary (explicit filter)
+# Push the NuGet package using an inline PowerShell script
 - task: PowerShell@2
   displayName: 'Push StringLibrary'
   inputs:
@@ -40,9 +41,10 @@ steps:
     script: |
       $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.0.nupkg"
       if (Test-Path $packagePath) {
+          Write-Host "Found package at: $packagePath"
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
-            --api-key BWMKyl9j2z6RTebLjGGyVn9cevwp6wBPif7DwoGApNutC3jJwXj0JQQJ99BDACAAAAAnPw96AAASAZDOARHJ
+            --api-key AzureDevOps
       } else {
           Write-Error "StringLibrary.1.0.0.nupkg not found!"
       }
