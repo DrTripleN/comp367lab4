@@ -28,7 +28,7 @@ steps:
 
 # Push the library package
 - task: PowerShell@2
-  displayName: 'Push TestPackage'
+  displayName: 'Push NuGet Packages'
   inputs:
     targetType: inline
     script: |
