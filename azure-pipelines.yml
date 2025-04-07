@@ -6,7 +6,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Changed to backslash
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget' 
 
 steps:
 - task: UseDotNet@2
@@ -23,7 +23,7 @@ steps:
 
 # Pack the SPECIFIC LIBRARY PROJECT
 - script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
-  displayName: 'Pack TestPackage'
+  displayName: 'Pack StringLibrary'
 
 # Diagnostic step
 - script: dir "$(outputDir)"
@@ -32,7 +32,7 @@ steps:
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push only TestPackage (explicit filter)
+# Push only StringLibrary (explicit filter)
 - task: PowerShell@2
   displayName: 'Push StringLibrary'
   inputs:
@@ -42,7 +42,7 @@ steps:
       if (Test-Path $packagePath) {
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
-            --api-key AzureDevOps
+            --api-key BWMKyl9j2z6RTebLjGGyVn9cevwp6wBPif7DwoGApNutC3jJwXj0JQQJ99BDACAAAAAnPw96AAASAZDOARHJ
       } else {
-          Write-Error "TestPackage.1.0.0.nupkg not found!"
+          Write-Error "StringLibrary.1.0.0.nupkg not found!"
       }
