@@ -6,46 +6,43 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Backslash for Windows
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Changed to backslash
 
 steps:
-# Install .NET 8 SDK
 - task: UseDotNet@2
   inputs:
     version: '8.x'
 
-# Create output directory (critical for Windows)
+# Explicitly create directory first
 - script: mkdir "$(outputDir)"
-  displayName: 'Create NuGet directory'
+  displayName: 'Create output directory'
 
-# Build ALL projects (keep existing behavior)
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'Build solution'
+# Build the SPECIFIC LIBRARY PROJECT (not solution)
+- script: dotnet build StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration)
+  displayName: 'Build Library Project'
 
-# Pack ONLY TestPackage.csproj (explicitly)
-- script: dotnet pack TestPackage/StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
+# Pack the SPECIFIC LIBRARY PROJECT
+- script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
   displayName: 'Pack TestPackage'
 
-# Diagnostic step: list files in the output directory
+# Diagnostic step
 - script: dir "$(outputDir)"
   displayName: 'List files in output directory'
 
-# Authenticate with Azure Artifacts
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push ONLY TestPackage.1.0.0.nupkg (wildcard-safe)
+# Push only TestPackage (explicit filter)
 - task: PowerShell@2
-  displayName: 'Push TestPackage'
+  displayName: 'Push StringLibrary'
   inputs:
     targetType: inline
     script: |
-      # Target TestPackage explicitly to avoid pushing other .nupkg files
-      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "TestPackage.1.0.0.nupkg"
+      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.0.nupkg"
       if (Test-Path $packagePath) {
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
             --api-key AzureDevOps
       } else {
-          Write-Error "TestPackage.1.0.0.nupkg not found in $(outputDir)"
+          Write-Error "TestPackage.1.0.0.nupkg not found!"
       }
