@@ -2,49 +2,55 @@ trigger:
 - main
 
 pool:
-  name: 'COMP367-DevOps Agent'  # Self-hosted Windows agent
+  name: 'COMP367-DevOps Agent'
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Backslashes for Windows
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'
 
 steps:
-# Install .NET 8 SDK
 - task: UseDotNet@2
   inputs:
     version: '8.x'
 
-# Create output directory explicitly
+# Clean build directories to ensure no caching issues
+- script: |
+    if exist StringLibrary\bin rmdir /s /q StringLibrary\bin
+    if exist StringLibrary\obj rmdir /s /q StringLibrary\obj
+  displayName: 'Clean build directories'
+
+# Create output directory
 - script: mkdir "$(outputDir)"
-  displayName: 'Create NuGet output directory'
+  displayName: 'Create output directory'
 
-# Build TestPackage
-- script: dotnet build TestPackage/TestPackage.csproj --configuration $(buildConfiguration)
-  displayName: 'Build TestPackage'
+# Build the library project
+- script: dotnet build StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration)
+  displayName: 'Build Library Project'
 
-# Pack TestPackage
-- script: dotnet pack TestPackage/TestPackage.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
-  displayName: 'Pack TestPackage'
+# Pack the library project into a NuGet package
+- script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
+  displayName: 'Pack StringLibrary'
 
-# Verify the .nupkg file exists
+# Diagnostic: List files in the output directory
 - script: dir "$(outputDir)"
-  displayName: 'Check NuGet package exists'
+  displayName: 'List files in output directory'
 
 # Authenticate with Azure Artifacts
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push TestPackage.1.0.0.nupkg
+# Push the NuGet package using an inline PowerShell script
 - task: PowerShell@2
-  displayName: 'Push TestPackage to Azure Artifacts'
+  displayName: 'Push StringLibrary'
   inputs:
     targetType: inline
     script: |
-      $packagePath = "$(outputDir)\TestPackage.1.0.0.nupkg"
+      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.0.nupkg"
       if (Test-Path $packagePath) {
+          Write-Host "Found package at: $packagePath"
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
             --api-key AzureDevOps
       } else {
-          Write-Error "TestPackage.1.0.0.nupkg not found!"
+          Write-Error "StringLibrary.1.0.1.nupkg not found!"
       }
