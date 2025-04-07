@@ -6,43 +6,46 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Changed to backslash
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Backslash for Windows
 
 steps:
+# Install .NET 8 SDK
 - task: UseDotNet@2
   inputs:
     version: '8.x'
 
-# Explicitly create directory first
+# Create output directory (critical for Windows)
 - script: mkdir "$(outputDir)"
-  displayName: 'Create output directory'
+  displayName: 'Create NuGet directory'
 
-# Build the SPECIFIC LIBRARY PROJECT (not solution)
-- script: dotnet build StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration)
-  displayName: 'Build Library Project'
+# Build ALL projects (keep existing behavior)
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'Build solution'
 
-# Pack the SPECIFIC LIBRARY PROJECT
-- script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
+# Pack ONLY TestPackage.csproj (explicitly)
+- script: dotnet pack TestPackage/StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
   displayName: 'Pack TestPackage'
 
-# Diagnostic step
+# Diagnostic step: list files in the output directory
 - script: dir "$(outputDir)"
   displayName: 'List files in output directory'
 
+# Authenticate with Azure Artifacts
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push only TestPackage 
+# Push ONLY TestPackage.1.0.0.nupkg (wildcard-safe)
 - task: PowerShell@2
   displayName: 'Push TestPackage'
   inputs:
     targetType: inline
     script: |
+      # Target TestPackage explicitly to avoid pushing other .nupkg files
       $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "TestPackage.1.0.0.nupkg"
       if (Test-Path $packagePath) {
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
             --api-key AzureDevOps
       } else {
-          Write-Error "TestPackage.1.0.0.nupkg not found!"
+          Write-Error "TestPackage.1.0.0.nupkg not found in $(outputDir)"
       }
