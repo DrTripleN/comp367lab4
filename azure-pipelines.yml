@@ -22,5 +22,5 @@ steps:
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-- script: dotnet nuget push "$(outputDir)/*.nupkg" --source "<your-feed-URL>" --api-key AzureDevOps
+- script: dotnet nuget push "$(outputDir)/*.nupkg" --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" --api-key AzureDevOps
   displayName: 'Push to Azure Artifacts'
