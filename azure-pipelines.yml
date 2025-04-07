@@ -45,7 +45,7 @@ steps:
   inputs:
     targetType: inline
     script: |
-      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.0.nupkg"
+      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.1.nupkg"
       if (Test-Path $packagePath) {
           Write-Host "Found package at: $packagePath"
           dotnet nuget push $packagePath `
