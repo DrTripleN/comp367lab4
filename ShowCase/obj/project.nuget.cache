@@ -1,8 +1,18 @@
 {
   "version": 2,
-  "dgSpecHash": "vXXSVI+ZF3M=",
-  "success": true,
+  "dgSpecHash": "St3nuCNVfvw=",
+  "success": false,
   "projectFilePath": "C:\\Users\\natha\\source\\repos\\ClassLibraryProjects\\ShowCase\\ShowCase.csproj",
   "expectedPackageFiles": [],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1102",
+      "level": "Error",
+      "message": "Unable to find package StringLibrary with version (>= 1.0.1)\r\n  - Found 1 version(s) in nuget.org [ Nearest version: 1.0.0 ]\r\n  - Found 0 version(s) in Microsoft Visual Studio Offline Packages",
+      "libraryId": "StringLibrary",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }

@@ -1,9 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
-		<!-- Add these lines -->
+		<!-- NuGet Packaging Settings -->
 		<IsPackable>true</IsPackable>
-		<PackageId>StringLibrary</PackageId>
-		<Version>1.0.1</Version>
+		<PackageId>TesterPackage</PackageId>
+		<Version>1.0.0</Version>
+		<!-- Optional Metadata -->
+		<Authors>Nathaniel Needham</Authors>
+		<Description>Lab4</Description>
 	</PropertyGroup>
 </Project>
