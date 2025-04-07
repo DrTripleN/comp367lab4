@@ -13,6 +13,12 @@ steps:
   inputs:
     version: '8.x'
 
+# Clean build directories to ensure no caching issues
+- script: |
+    if exist StringLibrary\bin rmdir /s /q StringLibrary\bin
+    if exist StringLibrary\obj rmdir /s /q StringLibrary\obj
+  displayName: 'Clean build directories'
+
 # Create output directory
 - script: mkdir "$(outputDir)"
   displayName: 'Create output directory'
@@ -29,7 +35,7 @@ steps:
 - script: dir "$(outputDir)"
   displayName: 'List files in output directory'
 
-# Authenticate with Azure Artifacts (this will configure credentials for nuget push)
+# Authenticate with Azure Artifacts
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
