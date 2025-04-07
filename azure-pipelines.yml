@@ -2,55 +2,49 @@ trigger:
 - main
 
 pool:
-  name: 'COMP367-DevOps Agent'
+  name: 'COMP367-DevOps Agent'  # Self-hosted Windows agent
 
 variables:
   buildConfiguration: 'Release'
-  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'
+  outputDir: '$(Build.ArtifactStagingDirectory)\nuget'  # Backslashes for Windows
 
 steps:
+# Install .NET 8 SDK
 - task: UseDotNet@2
   inputs:
     version: '8.x'
 
-# Clean build directories to ensure no caching issues
-- script: |
-    if exist StringLibrary\bin rmdir /s /q StringLibrary\bin
-    if exist StringLibrary\obj rmdir /s /q StringLibrary\obj
-  displayName: 'Clean build directories'
-
-# Create output directory
+# Create output directory explicitly
 - script: mkdir "$(outputDir)"
-  displayName: 'Create output directory'
+  displayName: 'Create NuGet output directory'
 
-# Build the library project
-- script: dotnet build StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration)
-  displayName: 'Build Library Project'
+# Build TesterPackage
+- script: dotnet build TesterPackage/ShowCase.csproj --configuration $(buildConfiguration)
+  displayName: 'Build TestPackage'
 
-# Pack the library project into a NuGet package
-- script: dotnet pack StringLibrary\StringLibrary.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
-  displayName: 'Pack StringLibrary'
+# Pack TesterPackage
+- script: dotnet pack TesterPackage/ShowCase.csproj --configuration $(buildConfiguration) --output "$(outputDir)"
+  displayName: 'Pack TestPackage'
 
-# Diagnostic: List files in the output directory
+# Verify the .nupkg file exists
 - script: dir "$(outputDir)"
-  displayName: 'List files in output directory'
+  displayName: 'Check NuGet package exists'
 
 # Authenticate with Azure Artifacts
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate with Azure Artifacts'
 
-# Push the NuGet package using an inline PowerShell script
+# Push TestPackage.1.0.0.nupkg
 - task: PowerShell@2
-  displayName: 'Push StringLibrary'
+  displayName: 'Push TesterPackage to Azure Artifacts'
   inputs:
     targetType: inline
     script: |
-      $packagePath = Join-Path -Path "$(outputDir)" -ChildPath "StringLibrary.1.0.1.nupkg"
+      $packagePath = "$(outputDir)\TesterPackage.1.0.0.nupkg"
       if (Test-Path $packagePath) {
-          Write-Host "Found package at: $packagePath"
           dotnet nuget push $packagePath `
             --source "https://pkgs.dev.azure.com/nneedha1/1b5aa350-91f7-4285-bd87-d5f20c9989f0/_packaging/MyTeamFeed/nuget/v3/index.json" `
             --api-key AzureDevOps
       } else {
-          Write-Error "StringLibrary.1.0.1.nupkg not found!"
+          Write-Error "TesterPackage.1.0.0.nupkg not found!"
       }
